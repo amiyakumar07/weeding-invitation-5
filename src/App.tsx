@@ -103,7 +103,6 @@ export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
-  const [theme, setTheme] = useState<'modern' | 'rustic' | 'vintage'>('modern');
   
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -111,10 +110,11 @@ export default function App() {
   const springX = useSpring(mouseX, { damping: 50, stiffness: 400 });
   const springY = useSpring(mouseY, { damping: 50, stiffness: 400 });
 
-  const moveX = useTransform(springX, [0, typeof window !== 'undefined' ? window.innerWidth : 1920], [-20, 20]);
-  const moveY = useTransform(springY, [0, typeof window !== 'undefined' ? window.innerHeight : 1080], [-20, 20]);
+  const moveX = useTransform(springX, [0, typeof window !== 'undefined' ? window.innerWidth : 1920], [-30, 30]);
+  const moveY = useTransform(springY, [0, typeof window !== 'undefined' ? window.innerHeight : 1080], [-30, 30]);
 
   const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 1.1]);
   const scrollRotate = useTransform(scrollYProgress, [0, 1], [0, 45]);
@@ -163,41 +163,99 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen bg-wedding-cream text-wedding-ink selection:bg-wedding-gold/30 transition-colors duration-1000 theme-${theme}`}>
-      {/* Theme Selector */}
-      <div className="fixed bottom-12 left-8 z-[150] flex flex-col gap-4">
-        {[
-          { id: 'modern', label: 'Modern Royale', color: '#D4AF37' },
-          { id: 'rustic', label: 'Earth & Sage', color: '#8A9A5B' },
-          { id: 'vintage', label: 'Petal & Parchment', color: '#B43D56' }
-        ].map((t) => (
-          <motion.button
-            key={t.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.05, x: 8 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setTheme(t.id as any)}
-            className={`group flex items-center gap-4 p-2 pr-6 rounded-full border transition-all duration-700 bg-wedding-card/40 backdrop-blur-xl ${
-              theme === t.id 
-                ? 'border-wedding-gold shadow-2xl shadow-wedding-gold/20' 
-                : 'border-wedding-gold/10 hover:border-wedding-gold/40'
-            }`}
+    <div className={`min-h-screen bg-wedding-cream text-wedding-ink selection:bg-wedding-gold/30 transition-colors duration-1000`}>
+      {/* Scroll Progress Indicator */}
+      <div className="fixed top-12 right-12 z-[200] hidden lg:block">
+        <svg width="60" height="60" viewBox="0 0 100 100" className="rotate-[-90deg]">
+          <circle 
+            cx="50" cy="50" r="45" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            fill="none" 
+            className="text-wedding-gold/10" 
+          />
+          <motion.circle 
+            cx="50" cy="50" r="45" 
+            stroke="currentColor" 
+            strokeWidth="3" 
+            fill="none" 
+            className="text-wedding-gold"
+            style={{ pathLength: smoothProgress }} 
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.span 
+            className="text-[9px] font-bold text-wedding-gold uppercase tracking-tighter"
+            style={{ 
+              opacity: useTransform(smoothProgress, [0, 0.05, 0.95, 1], [0, 1, 1, 0])
+             }}
           >
-            <div 
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-700 ${theme === t.id ? 'scale-110 shadow-lg' : 'grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100'}`}
-              style={{ backgroundColor: t.color }}
-            >
-              <Sparkles className="w-4 h-4 text-white/50" />
-            </div>
-            <div className="flex flex-col items-start overflow-hidden w-0 group-hover:w-32 transition-all duration-700">
-              <span className="text-[8px] uppercase tracking-widest font-black text-wedding-gold mb-0.5">Theme</span>
-              <span className={`text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors ${theme === t.id ? 'text-wedding-ink' : 'text-wedding-ink/40'}`}>
-                {t.label}
-              </span>
-            </div>
-          </motion.button>
+            {Math.round(smoothProgress.get() * 100)}%
+          </motion.span>
+        </div>
+      </div>
+
+      {/* Floating Particles/Sparkles */}
+      <div className="fixed inset-0 pointer-events-none z-[1]">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ 
+              opacity: 0,
+              x: Math.random() * 100 + 'vw',
+              y: '-10vh'
+            }}
+            animate={{ 
+              opacity: [0, 0.5, 0],
+              y: ['-10vh', '110vh'],
+              x: (Math.random() * 100) + (Math.random() * 20 - 10) + 'vw'
+            }}
+            transition={{ 
+              duration: 15 + Math.random() * 10,
+              repeat: Infinity,
+              ease: "linear",
+              delay: Math.random() * 15
+            }}
+            className="absolute rounded-full bg-wedding-gold/20"
+            style={{ 
+              width: Math.random() * 3 + 1 + 'px',
+              height: Math.random() * 3 + 1 + 'px',
+              filter: 'blur(1px)'
+            }}
+          />
         ))}
+      </div>
+
+      {/* Floating Parallax Background Elements */}
+      <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+        <motion.div 
+          style={{ 
+            y: useTransform(smoothProgress, [0, 1], [0, -500]),
+            rotate: useTransform(smoothProgress, [0, 1], [0, 45]),
+            x: moveX
+          }}
+          className="absolute top-[20%] -left-20 w-[600px] h-[600px] border border-wedding-gold/[0.03] rounded-full"
+        />
+        <motion.div 
+          style={{ 
+            y: useTransform(smoothProgress, [0, 1], [0, -800]),
+            rotate: useTransform(smoothProgress, [0, 1], [45, 0]),
+            x: useTransform(moveX, (v) => -v)
+          }}
+          className="absolute top-[60%] -right-40 w-[800px] h-[800px] border border-wedding-gold/[0.02] rounded-full"
+        />
+        
+        {/* Animated Decorative Path */}
+        <svg className="absolute inset-0 w-full h-full opacity-[0.05]" preserveAspectRatio="none">
+          <motion.path 
+            d="M 50 0 Q 80 200 20 400 T 50 800 T 20 1200 T 50 1600" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="1"
+            className="text-wedding-gold"
+            style={{ pathLength: smoothProgress }}
+          />
+        </svg>
       </div>
 
       {/* Custom Cursor Glow */}
@@ -278,7 +336,7 @@ export default function App() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 1.2, delay: 0.5 }}
-                    className="heading-script text-white text-6xl md:text-[12rem] drop-shadow-2xl"
+                    className="heading-script text-white text-8xl md:text-[14rem] drop-shadow-2xl"
                   >
                     Aether
                   </motion.span>
@@ -294,7 +352,7 @@ export default function App() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 1.2, delay: 0.8 }}
-                    className="heading-script text-white text-6xl md:text-[12rem] drop-shadow-2xl"
+                    className="heading-script text-white text-8xl md:text-[14rem] drop-shadow-2xl"
                   >
                     Celeste
                   </motion.span>
@@ -382,11 +440,20 @@ export default function App() {
             >
               A.C
             </motion.div>
-            <div className="hidden md:flex space-x-12 text-[10px] uppercase tracking-[0.3em] font-bold opacity-60">
-              <a href="#story" className="hover:text-wedding-gold transition-colors">Story</a>
-              <a href="#schedule" className="hover:text-wedding-gold transition-colors">Events</a>
-              <a href="#venue" className="hover:text-wedding-gold transition-colors">Venue</a>
-              <a href="#rsvp" className="hover:text-wedding-gold transition-colors">RSVP</a>
+            <div className="hidden md:flex space-x-12 text-[10px] uppercase tracking-[0.3em] font-black">
+              {['story', 'schedule', 'venue', 'rsvp'].map((item) => (
+                <motion.a 
+                  key={item}
+                  href={`#${item}`} 
+                  whileHover={{ y: -2 }}
+                  className="relative hover:text-wedding-gold transition-colors group"
+                >
+                  {item}
+                  <motion.span 
+                    className="absolute -bottom-2 left-0 w-0 h-px bg-wedding-gold transition-all group-hover:w-full"
+                  />
+                </motion.a>
+              ))}
             </div>
             <div className="flex items-center gap-6">
               <button 
@@ -495,55 +562,108 @@ export default function App() {
           </div>
 
           <div className="relative z-20 w-full max-w-xl mx-auto px-6 flex flex-col items-center text-center">
-            {/* Header Names - More centered and formal */}
+            <div className="absolute inset-x-8 inset-y-12 md:inset-x-20 md:inset-y-24 pointer-events-none">
+              <motion.div 
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.5, ease: "easeInOut", delay: 1 }}
+                className="absolute inset-0 border border-wedding-gold/20 rounded-[3rem]"
+              />
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 1, delay: 3 }}
+                className="absolute -top-3 left-1/2 -translate-x-1/2 bg-wedding-cream px-6"
+              >
+                <div className="w-6 h-6 border border-wedding-gold/30 rotate-45 flex items-center justify-center">
+                  <div className="w-2 h-2 bg-wedding-gold/40 rounded-full" />
+                </div>
+              </motion.div>
+            </div>
+
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.5 }}
-              className="mb-14"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.5, delay: 0.5 }}
+              className="mb-14 relative"
             >
               <div className="flex flex-col items-center gap-2">
-                <span className="heading-script text-wedding-accent text-8xl md:text-[10rem] leading-tight px-4">Aether</span>
-                <div className="flex items-center gap-6 -my-4 relative z-10">
-                  <div className="w-12 h-px bg-wedding-gold/30" />
-                  <span className="heading-serif text-wedding-gold italic text-3xl md:text-5xl font-light">weds</span>
-                  <div className="w-12 h-px bg-wedding-gold/30" />
-                </div>
-                <span className="heading-script text-wedding-accent text-8xl md:text-[10rem] leading-tight px-4">Celeste</span>
+                <motion.span 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 1.2, delay: 0.8 }}
+                  className="heading-display text-wedding-accent text-7xl md:text-[8rem] leading-tight px-4"
+                >
+                  Aether
+                </motion.span>
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: "auto" }}
+                  transition={{ duration: 1.5, delay: 1.2 }}
+                  className="flex items-center gap-6 -my-4 relative z-10 overflow-hidden"
+                >
+                  <div className="w-12 h-px bg-wedding-gold/30 shrink-0" />
+                  <span className="heading-serif text-wedding-gold italic text-3xl md:text-5xl font-light whitespace-nowrap">weds</span>
+                  <div className="w-12 h-px bg-wedding-gold/30 shrink-0" />
+                </motion.div>
+                <motion.span 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 1.2, delay: 1 }}
+                  className="heading-display text-wedding-accent text-7xl md:text-[8rem] leading-tight px-4"
+                >
+                  Celeste
+                </motion.span>
               </div>
               <motion.p 
                 initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 1.5, delay: 0.5 }}
-                className="mt-8 text-wedding-ink/60 heading-serif text-sm md:text-base italic max-w-xs mx-auto"
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1, delay: 2 }}
+                className="uppercase tracking-[0.8em] text-[10px] md:text-[11px] font-black text-wedding-gold/60 mt-12 mb-4"
               >
-                "With our whole hearts, for our whole lives."
+                The Celebration of Our Union
               </motion.p>
             </motion.div>
 
-            {/* Date Card - Elegant Card Style */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, delay: 0.3 }}
-              className="w-full bg-wedding-card/80 backdrop-blur-sm rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-10 border border-wedding-gold/10 mb-8 relative group overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 2.2 }}
+              className="w-full max-w-lg mx-auto"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-wedding-gold/30 to-transparent" />
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex gap-2 mb-2">
-                  <Heart className="w-4 h-4 text-wedding-accent fill-wedding-accent" />
-                  <Heart className="w-4 h-4 text-wedding-accent fill-wedding-accent" />
-                  <Heart className="w-4 h-4 text-wedding-accent fill-wedding-accent" />
+              <div className="w-full bg-wedding-card/80 backdrop-blur-md rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-10 border border-wedding-gold/10 mb-8 relative group overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-wedding-gold/30 to-transparent" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex gap-2 mb-2">
+                    <Heart className="w-4 h-4 text-wedding-accent fill-wedding-accent" />
+                    <Heart className="w-4 h-4 text-wedding-accent fill-wedding-accent" />
+                    <Heart className="w-4 h-4 text-wedding-accent fill-wedding-accent" />
+                  </div>
+                  <div className="heading-serif text-wedding-ink text-3xl md:text-5xl font-light tracking-tight">
+                    25th October, 2026
+                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.4em] font-bold text-wedding-gold flex items-center gap-2 mt-2">
+                    <MapPin className="w-3 h-3" />
+                    Umaid Bhawan Palace, Rajasthan
+                  </div>
                 </div>
-                <div className="heading-serif text-wedding-ink text-3xl md:text-5xl font-light tracking-tight">
-                  25th October, 2026
-                </div>
-                <div className="flex items-center gap-3 text-wedding-ink/50 uppercase tracking-[0.4em] text-[10px] md:text-xs font-bold mt-4">
-                  <MapPin className="w-3 h-3 text-wedding-gold" />
-                  <span>The City Palace, Jaipur</span>
-                </div>
+              </div>
+            </motion.div>
+
+            {/* Scroll Hint */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 3, duration: 1 }}
+              className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 hidden lg:flex"
+            >
+              <span className="text-[8px] uppercase tracking-[0.5em] font-black text-wedding-gold">Begin Journey</span>
+              <div className="w-px h-16 bg-gradient-to-b from-wedding-gold to-transparent relative">
+                <motion.div 
+                  animate={{ y: [0, 40, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-wedding-gold rounded-full"
+                />
               </div>
             </motion.div>
 
@@ -629,59 +749,118 @@ export default function App() {
           </motion.div>
 
           <div className="max-w-7xl mx-auto relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-              <div className="lg:col-span-5 relative order-2 lg:order-1">
-                <motion.div 
-                  initial={{ clipPath: "inset(0 100% 0 0)", scale: 1.2, opacity: 0 }}
-                  whileInView={{ clipPath: "inset(0 0% 0 0)", scale: 1, opacity: 1 }}
-                  viewport={{ once: true, margin: "-10%" }}
-                  transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
-                  className="rounded-2xl overflow-hidden shadow-2xl relative z-10"
-                >
-                  <motion.img 
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ duration: 1.5 }}
-                    src="https://images.unsplash.com/photo-1544124499-58912cbddaad?q=80&w=1974&auto=format&fit=crop" 
-                    alt="Story Couple" 
-                    className="w-full aspect-[4/5] object-cover"
-                  />
-                </motion.div>
-                <motion.div 
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    rotate: [0, 5, 0]
-                  }}
-                  transition={{ 
-                    duration: 10,
-                    repeat: Infinity,
-                    ease: "linear"
-                  }}
-                  className="absolute -bottom-10 -left-10 w-60 h-60 bg-wedding-gold/5 rounded-full -z-10 blur-3xl" 
-                />
-              </div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-20 space-y-6"
+            >
+              <span className="text-[10px] uppercase tracking-[0.6em] font-black text-wedding-gold">The Hearts of the Day</span>
+              <h2 className="heading-serif text-5xl md:text-7xl">The Happy Couple</h2>
+              <div className="w-24 h-px bg-wedding-gold/30 mx-auto" />
+            </motion.div>
+
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-20 lg:gap-40 relative">
+              {/* Decorative Connector */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl h-px bg-gradient-to-r from-transparent via-wedding-gold/20 to-transparent hidden lg:block" />
               
-              <div className="lg:col-span-7 space-y-12 order-1 lg:order-2">
-                <motion.div 
-                  variants={staggerContainer}
-                  initial="initial"
-                  whileInView="whileInView"
-                  viewport={{ once: true, margin: "-20%" }}
-                  className="space-y-8"
-                >
-                  <motion.div variants={fadeInUp} className="flex items-center gap-4 text-wedding-gold">
-                    <Heart className="w-5 h-5" fill="currentColor" />
-                    <span className="uppercase tracking-[0.4em] text-[10px] font-bold">Our Journey</span>
+              {/* Groom */}
+              <motion.div 
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                animate={{ 
+                  y: [0, -15, 0],
+                  rotate: [0, 1, 0]
+                }}
+                transition={{ 
+                  initial: { duration: 1.2, ease: [0.16, 1, 0.3, 1] },
+                  animate: { duration: 6, repeat: Infinity, ease: "easeInOut" }
+                }}
+                viewport={{ once: true }}
+                className="relative group"
+              >
+                <div className="relative">
+                  <motion.div 
+                    whileHover={{ scale: 1.05, rotate: -2 }}
+                    className="w-64 h-64 md:w-80 md:h-80 rounded-full border-2 border-wedding-gold/20 p-3 group-hover:border-wedding-gold transition-colors duration-700 overflow-hidden"
+                  >
+                    <div className="w-full h-full rounded-full overflow-hidden relative">
+                      <img 
+                        src="https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=2101&auto=format&fit=crop" 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                        alt="The Groom"
+                      />
+                      <div className="absolute inset-0 bg-wedding-ink/20 group-hover:bg-transparent transition-colors duration-700" />
+                    </div>
                   </motion.div>
-                  <motion.h2 variants={fadeInUp} className="heading-serif text-5xl md:text-8xl leading-tight">Beyond the Stars &<br />Across the Oceans</motion.h2>
-                  <motion.div variants={fadeInUp} className="w-20 h-1 bg-wedding-gold/20" />
-                  <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-wedding-ink/70 leading-relaxed font-light first-letter:text-6xl first-letter:font-serif first-letter:mr-4 first-letter:float-left first-letter:text-wedding-accent">
-                    Our story didn’t begin with a grand gesture, but with a quiet understanding in a rainy bookstore in Amsterdam. A shared admiration for brittle pages and strong coffee sparked a connection that grew stronger through every sunset we shared across different continents.
-                  </motion.p>
-                  <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-wedding-ink/70 leading-relaxed font-light">
-                    From backpacking through the Amalfi Coast to the quiet nights in our first studio apartment, we realized that "home" wasn’t a location on a map, but a feeling in each other's presence.
-                  </motion.p>
-                </motion.div>
-              </div>
+                  
+                  {/* Floating Label */}
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="absolute -bottom-6 -right-6 bg-wedding-card backdrop-blur-xl border border-wedding-gold/20 px-8 py-4 rounded-2xl shadow-2xl"
+                  >
+                    <span className="text-[10px] uppercase tracking-[0.3em] font-black text-wedding-gold block mb-1">The Groom</span>
+                    <h3 className="heading-serif text-2xl text-wedding-ink">Aether Vance</h3>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Heart Divider */}
+              <motion.div 
+                initial={{ scale: 0, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                className="relative z-10"
+              >
+                <div className="w-16 h-16 bg-wedding-card border border-wedding-gold/20 rounded-full flex items-center justify-center shadow-2xl">
+                  <Heart className="w-6 h-6 text-wedding-accent fill-wedding-accent animate-pulse" />
+                </div>
+              </motion.div>
+
+              {/* Bride */}
+              <motion.div 
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                animate={{ 
+                  y: [0, 15, 0],
+                  rotate: [0, -1, 0]
+                }}
+                transition={{ 
+                  initial: { duration: 1.2, ease: [0.16, 1, 0.3, 1] },
+                  animate: { duration: 7, repeat: Infinity, ease: "easeInOut" }
+                }}
+                viewport={{ once: true }}
+                className="relative group"
+              >
+                <div className="relative">
+                  <motion.div 
+                    whileHover={{ scale: 1.05, rotate: 2 }}
+                    className="w-64 h-64 md:w-80 md:h-80 rounded-full border-2 border-wedding-gold/20 p-3 group-hover:border-wedding-gold transition-colors duration-700 overflow-hidden"
+                  >
+                    <div className="w-full h-full rounded-full overflow-hidden relative">
+                      <img 
+                        src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2069&auto=format&fit=crop" 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                        alt="The Bride"
+                      />
+                      <div className="absolute inset-0 bg-wedding-ink/20 group-hover:bg-transparent transition-colors duration-700" />
+                    </div>
+                  </motion.div>
+
+                  {/* Floating Label */}
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="absolute -bottom-6 -left-6 bg-wedding-card backdrop-blur-xl border border-wedding-gold/20 px-8 py-4 rounded-2xl shadow-2xl"
+                  >
+                    <span className="text-[10px] uppercase tracking-[0.3em] font-black text-wedding-gold block mb-1">The Bride</span>
+                    <h3 className="heading-serif text-2xl text-wedding-ink">Celeste Thorne</h3>
+                  </motion.div>
+                </div>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -748,6 +927,11 @@ export default function App() {
                     0{idx + 1}
                   </div>
                   
+                  {/* Glare Effect Overlay */}
+                  <div className="absolute inset-0 z-[1] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                    <div className="absolute inset-[-50%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] animate-[glare_3s_infinite]" />
+                  </div>
+                  
                   <div className="relative z-10">
                     <motion.div 
                       className="text-5xl mb-10 flex justify-center transform group-hover:scale-125 transition-transform duration-700"
@@ -801,10 +985,52 @@ export default function App() {
                 alt="RSVP Decor"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-wedding-card via-transparent to-transparent" />
-              <div className="absolute inset-0 p-16 flex flex-col justify-end">
-                <span className="text-[10px] uppercase tracking-[0.5em] font-bold mb-4 text-wedding-gold">Response Requested</span>
-                <h2 className="heading-serif text-5xl mb-6 text-wedding-ink">Can you join us?</h2>
-                <p className="text-wedding-ink/60 font-light leading-relaxed">Please let us know your plans by August 15th, 2026. We can't wait to see you.</p>
+              <div className="absolute inset-0 p-8 md:p-16 flex flex-col justify-between">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                >
+                  <div className="p-6 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-wedding-gold/30 transition-all duration-500 group/item">
+                    <div className="w-12 h-12 rounded-2xl bg-wedding-gold/10 flex items-center justify-center text-wedding-gold mb-4 group-hover/item:scale-110 transition-transform">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <span className="text-[9px] uppercase tracking-[0.4em] font-black text-wedding-gold block mb-2">Dress Code</span>
+                    <p className="text-[10px] text-wedding-ink/40 uppercase tracking-widest leading-loose font-bold">Formal Royal<br />Traditional Attire</p>
+                  </div>
+                  <div className="p-6 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-wedding-gold/30 transition-all duration-500 group/item">
+                    <div className="w-12 h-12 rounded-2xl bg-wedding-gold/10 flex items-center justify-center text-wedding-gold mb-4 group-hover/item:scale-110 transition-transform">
+                      <Heart className="w-5 h-5" />
+                    </div>
+                    <span className="text-[9px] uppercase tracking-[0.4em] font-black text-wedding-gold block mb-2">Registry</span>
+                    <p className="text-[10px] text-wedding-ink/40 uppercase tracking-widest leading-loose font-bold">Your Presence<br />Is Our Best Gift</p>
+                  </div>
+                </motion.div>
+
+                <div>
+                  <motion.span 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    className="text-[10px] uppercase tracking-[0.5em] font-bold mb-4 text-wedding-gold block"
+                  >
+                    Response Requested
+                  </motion.span>
+                  <motion.h2 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    className="heading-serif text-5xl mb-6 text-wedding-ink"
+                  >
+                    Can you join us?
+                  </motion.h2>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    className="text-wedding-ink/60 font-light leading-relaxed max-w-xs"
+                  >
+                    Please let us know your plans by August 15th, 2026. We can't wait to see you.
+                  </motion.p>
+                </div>
               </div>
             </div>
 
@@ -815,16 +1041,52 @@ export default function App() {
                     <label className="text-[10px] uppercase tracking-[0.4em] font-bold text-wedding-gold/70">Full Name</label>
                     <input required placeholder="Enter your name" className="w-full bg-transparent py-4 outline-none text-lg text-wedding-ink placeholder:text-wedding-ink/40" />
                   </div>
-                  <div className="group border-b border-wedding-gold/30 focus-within:border-wedding-gold transition-colors pb-2">
-                    <label className="text-[10px] uppercase tracking-[0.4em] font-bold text-wedding-gold/70">Attendance</label>
-                    <select className="w-full bg-transparent py-3 outline-none text-lg text-wedding-ink appearance-none cursor-pointer">
-                      <option className="bg-[#1a1a1a]">Excitedly Attending</option>
-                      <option className="bg-[#1a1a1a]">Regretfully Declining</option>
-                    </select>
+                  <div className="space-y-6 pt-4">
+                    <label className="text-[10px] uppercase tracking-[0.4em] font-bold text-wedding-gold/70 block">Attendance</label>
+                    <div className="grid grid-cols-1 gap-4">
+                      <label className="relative flex items-center p-5 rounded-2xl border border-wedding-gold/20 cursor-pointer group hover:border-wedding-gold/50 transition-all bg-wedding-card/30">
+                        <input type="radio" name="attendance" value="attending" className="peer sr-only" defaultChecked />
+                        <div className="w-5 h-5 rounded-full border-2 border-wedding-gold/30 mr-4 flex items-center justify-center peer-checked:border-wedding-gold peer-checked:bg-wedding-gold/10 transition-all">
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            whileTap={{ scale: 0.8 }}
+                            className="w-2.5 h-2.5 rounded-full bg-wedding-gold opacity-0 peer-checked:opacity-100 transition-opacity" 
+                          />
+                        </div>
+                        <span className="text-xs uppercase tracking-widest font-bold text-wedding-ink/40 peer-checked:text-wedding-ink transition-all">Excitedly Attending</span>
+                        <div className="absolute inset-0 border-2 border-wedding-gold opacity-0 peer-checked:opacity-10 rounded-2xl transition-opacity" />
+                      </label>
+                      
+                      <label className="relative flex items-center p-5 rounded-2xl border border-wedding-gold/20 cursor-pointer group hover:border-wedding-gold/50 transition-all bg-wedding-card/30">
+                        <input type="radio" name="attendance" value="declining" className="peer sr-only" />
+                        <div className="w-5 h-5 rounded-full border-2 border-wedding-gold/30 mr-4 flex items-center justify-center peer-checked:border-wedding-gold peer-checked:bg-wedding-gold/10 transition-all">
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            whileTap={{ scale: 0.8 }}
+                            className="w-2.5 h-2.5 rounded-full bg-wedding-gold opacity-0 peer-checked:opacity-100 transition-opacity" 
+                          />
+                        </div>
+                        <span className="text-xs uppercase tracking-widest font-bold text-wedding-ink/40 peer-checked:text-wedding-ink transition-all">Regretfully Declining</span>
+                        <div className="absolute inset-0 border-2 border-wedding-gold opacity-0 peer-checked:opacity-10 rounded-2xl transition-opacity" />
+                      </label>
+                    </div>
                   </div>
-                  <div className="group border-b border-wedding-gold/30 focus-within:border-wedding-gold transition-colors pb-2">
-                    <label className="text-[10px] uppercase tracking-[0.4em] font-bold text-wedding-gold/70">Guests</label>
-                    <input type="number" defaultValue="1" className="w-full bg-transparent py-4 outline-none text-lg text-wedding-ink" />
+                  <div className="space-y-4 pt-4">
+                    <label className="text-[10px] uppercase tracking-[0.4em] font-bold text-wedding-gold/70 block">Number of Guests</label>
+                    <div className="flex flex-wrap gap-3">
+                      {['1', '2', '3', '4', '5+'].map((num) => (
+                        <label key={num} className="relative flex items-center justify-center w-12 h-12 rounded-xl border border-wedding-gold/20 cursor-pointer group hover:border-wedding-gold/50 transition-all bg-wedding-card/30">
+                          <input type="radio" name="guests" value={num} className="peer sr-only" defaultChecked={num === '1'} />
+                          <span className="text-sm font-bold text-wedding-ink/40 peer-checked:text-wedding-gold transition-all">{num}</span>
+                          <div className="absolute inset-0 border-2 border-wedding-gold opacity-0 peer-checked:opacity-20 rounded-xl transition-opacity" />
+                          <motion.div 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="absolute inset-0 rounded-xl"
+                          />
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
