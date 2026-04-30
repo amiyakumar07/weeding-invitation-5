@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+  --font-script: "Great Vibes", cursive;
+  
+  --color-wedding-cream: var(--wedding-cream, #0A0A0A);
+  --color-wedding-gold: var(--wedding-gold, #D4AF37);
+  --color-wedding-sage: var(--wedding-sage, #A2AD91);
+  --color-wedding-accent: var(--wedding-accent, #B43D56);
+  --color-wedding-ink: var(--wedding-ink, #EAEAEA);
+  --color-wedding-card: var(--wedding-card, #141414);
+}
+
+:root {
+  /* Modern Royale (Default - Dark) */
+  --wedding-cream: #0A0A0A;
+  --wedding-gold: #D4AF37;
+  --wedding-sage: #A2AD91;
+  --wedding-accent: #B43D56;
+  --wedding-ink: #EAEAEA;
+  --wedding-card: #141414;
+}
+
+.theme-rustic {
+  --wedding-cream: #F7F3F0;
+  --wedding-gold: #8A9A5B; /* Sage */
+  --wedding-sage: #8A9A5B;
+  --wedding-accent: #A52A2A; /* Terracotta */
+  --wedding-ink: #3E3B39;
+  --wedding-card: #FFFFFF;
+}
+
+.theme-vintage {
+  --wedding-cream: #FDFBF7;
+  --wedding-gold: #D4AF37;
+  --wedding-sage: #A2AD91;
+  --wedding-accent: #B43D56; /* Dusky Rose */
+  --wedding-ink: #2D2424;
+  --wedding-card: #FFFFFF;
+}
+
+.theme-modern {
+  --wedding-cream: #0A0A0A;
+  --wedding-gold: #D4AF37;
+  --wedding-sage: #A2AD91;
+  --wedding-ink: #EAEAEA;
+  --wedding-card: #141414;
+}
+
+@layer base {
+  .heading-script {
+    font-family: var(--font-script);
+  }
+}
+
+body {
+  background-color: var(--color-wedding-cream);
+  color: var(--color-wedding-ink);
+  font-family: var(--font-sans);
+}
+
+.heading-serif {
+  font-family: var(--font-serif);
+}
+
+.heading-script {
+  font-family: var(--font-script);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+

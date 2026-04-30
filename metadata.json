@@ -1,0 +1,6 @@
+{
+  "name": "Eternal Ties - Premium Wedding Experience",
+  "description": "An aesthetic, all-in-one wedding website platform featuring RSVP tracking, event timelines, integrated maps, and personalized storytelling for modern couples.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["RSVP Management", "Interactive Timeline", "Venue Navigation"]
+}
